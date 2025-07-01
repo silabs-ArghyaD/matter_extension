@@ -15,7 +15,7 @@
 // <i> Default: 1000
 #define SL_ACTIVE_MODE_DURATION_MS 1000
 
-// <o SL_ACTIVE_MODE_THRESHOLD>  Active Mode Thresholed
+// <o SL_ACTIVE_MODE_THRESHOLD>  Active Mode Threshold
 // <i> 500ms Active Mode Threshold
 // <i> Default: 500
 #define SL_ACTIVE_MODE_THRESHOLD 500
@@ -24,20 +24,20 @@
 // <i> Default: 2
 #define SL_ICD_SUPPORTED_CLIENTS_PER_FABRIC 2
 
-// <o SL_TRANSPORT_IDLE_INTERVAL>   15s Idle Intervals
+// <o SL_TRANSPORT_IDLE_INTERVAL>  Idle Intervals
 // <i> Default: 15000
-#define SL_TRANSPORT_IDLE_INTERVAL 15000
+#define SL_TRANSPORT_IDLE_INTERVAL 3000
 
-// <o SL_TRANSPORT_ACTIVE_INTERVAL> 200ms Active Intervals
+// <o SL_TRANSPORT_ACTIVE_INTERVAL>  Active Intervals
 // <i> Default: 200
 #define SL_TRANSPORT_ACTIVE_INTERVAL 200
 
-// <o SL_CSL_TIMEOUT>
+// <o SL_CSL_TIMEOUT>  CSL Timeout
 // <i> Default: 30
 // <i> Feature requires matter_synchronized_sed component
 #define SL_CSL_TIMEOUT 30
 
-// <o CHIP_CONFIG_ENABLE_ICD_DSLS>
+// <o CHIP_CONFIG_ENABLE_ICD_DSLS>  Enable ICD DSLS
 // <i> Default: 0
 // <i> Set to true if device supports dynamic switching from SIT to LIT operating modes (DSLS)
 #define CHIP_CONFIG_ENABLE_ICD_DSLS 0
