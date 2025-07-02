@@ -26,7 +26,7 @@
 
 // <o SL_TRANSPORT_IDLE_INTERVAL>  Idle Intervals
 // <i> Default: 15000
-#define SL_TRANSPORT_IDLE_INTERVAL 3000
+#define SL_TRANSPORT_IDLE_INTERVAL 15000
 
 // <o SL_TRANSPORT_ACTIVE_INTERVAL>  Active Intervals
 // <i> Default: 200
@@ -37,7 +37,7 @@
 // <i> Feature requires matter_synchronized_sed component
 #define SL_CSL_TIMEOUT 30
 
-// <o CHIP_CONFIG_ENABLE_ICD_DSLS>  Enable DSLS
+// <o CHIP_CONFIG_ENABLE_ICD_DSLS>  Enable DSLS (Dynamic Switching from SIT to LIT)
 // <i> Default: 0
 // <i> Set to true if device supports dynamic switching from SIT to LIT operating modes (DSLS)
 #define CHIP_CONFIG_ENABLE_ICD_DSLS 0
