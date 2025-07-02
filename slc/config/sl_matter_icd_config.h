@@ -32,13 +32,13 @@
 // <i> Default: 200
 #define SL_TRANSPORT_ACTIVE_INTERVAL 200
 
-// <o SL_CSL_TIMEOUT>  Coordinated Sampled Listening Timeout
-// <i> Default: 30
+// <o SL_CSL_TIMEOUT>  CSL Timeout
+// <i> Coordinated Sampled Listening Timeout (Default: 30)
 // <i> Feature requires matter_synchronized_sed component
 #define SL_CSL_TIMEOUT 30
 
-// <o CHIP_CONFIG_ENABLE_ICD_DSLS>  Enable DSLS (Dynamic Switching from SIT to LIT)
-// <i> Default: 0
+// <q CHIP_CONFIG_ENABLE_ICD_DSLS>  Enable DSLS
+// <i> Dynamic Switching from SIT to LIT (Default: 0)
 // <i> Set to true if device supports dynamic switching from SIT to LIT operating modes (DSLS)
 #define CHIP_CONFIG_ENABLE_ICD_DSLS 0
 
