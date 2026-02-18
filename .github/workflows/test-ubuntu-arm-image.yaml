@@ -59,13 +59,23 @@ jobs:
           echo "=== GITHUB_* env vars ==="
           env | grep -E '^GITHUB_' || true
 
+      - name: Debug .git in workspace
+        if: always()
+        shell: bash
+        run: |
+          echo "=== Checking .git in GITHUB_WORKSPACE ==="
+          cd "$GITHUB_WORKSPACE"
+          echo "PWD=$(pwd)"
+          ls -la .git 2>/dev/null || echo ".git missing or not readable"
+          git status 2>&1 || true
+
       - name: Install Git and mark repository as safe
         if: always()
         shell: bash
         run: |
           apt-get update -qq && apt-get install -y -qq git
           cd "$GITHUB_WORKSPACE"
-          git config --global --add safe.directory "$(pwd)"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Initialize required submodules
         if: always()
