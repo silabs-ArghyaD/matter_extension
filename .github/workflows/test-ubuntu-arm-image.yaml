@@ -13,9 +13,13 @@ on:
 
 jobs:
   build-sqa-tools-ubuntu-arm:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     container:
-      image: ghcr.io/project-chip/chip-build-crosscompile:81
+      image: ubuntu:24.04
+ # build-sqa-tools-ubuntu-arm:
+ #   runs-on: ubuntu-latest
+ #   container:
+ #     image: ghcr.io/project-chip/chip-build-crosscompile:81
 
     steps:
       - name: Checkout repository
