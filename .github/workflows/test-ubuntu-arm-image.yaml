@@ -28,12 +28,39 @@ jobs:
           submodules: false
 
       - name: Verify ARM runner
+        if: always()
         shell: bash
         run: |
           echo "Runner arch: $(uname -m)"
           uname -a
 
+      - name: Debug workspace path
+        if: always()
+        shell: bash
+        run: |
+          echo "=== GITHUB_WORKSPACE ==="
+          echo "GITHUB_WORKSPACE='${GITHUB_WORKSPACE:-<unset>}'"
+          echo ""
+          echo "=== PWD ==="
+          echo "PWD=$(pwd)"
+          echo ""
+          echo "=== Root ls ==="
+          ls -la / || true
+          echo ""
+          echo "=== /__w contents (if present) ==="
+          ls -la /__w 2>/dev/null || echo "/__w not found or not readable"
+          echo ""
+          echo "=== /__w/matter_extension (if present) ==="
+          ls -la /__w/matter_extension 2>/dev/null || echo "not found"
+          echo ""
+          echo "=== /__w/*/matter_extension (if present) ==="
+          ls -la /__w/*/matter_extension 2>/dev/null || echo "not found"
+          echo ""
+          echo "=== GITHUB_* env vars ==="
+          env | grep -E '^GITHUB_' || true
+
       - name: Install Git and mark repository as safe
+        if: always()
         shell: bash
         run: |
           apt-get update -qq && apt-get install -y -qq git
@@ -41,39 +68,46 @@ jobs:
           git config --global --add safe.directory "$(pwd)"
 
       - name: Initialize required submodules
+        if: always()
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
           git submodule update --init third_party/matter_sdk
 
       - name: Checkout matter_sdk submodules
+        if: always()
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
           ./scripts/checkout_submodules.py --platform linux
 
       - name: Run bootstrap action
+        if: always()
         uses: SiliconLabsSoftware/matter_build_action/bootstrap@v2.0.0
 
       - name: Build chip-tool
+        if: always()
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
           ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-chip-tool-ipv6only-clang build"
 
       - name: Build OTA provider
+        if: always()
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
           ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-ota-provider-ipv6only-clang build"
 
       - name: Build all-clusters app
+        if: always()
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
           ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-all-clusters-clang build"
 
       - name: Build summary
+        if: always()
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
