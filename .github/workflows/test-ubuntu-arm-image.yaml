@@ -1,6 +1,3 @@
-# Test building SQA tools (chip-tool, ota-provider, all-clusters) on native Ubuntu ARM
-# without the CSA cross-compile image. Runs only on branch test/ubuntu-arm-image.
-
 name: Test Ubuntu ARM Image
 
 on:
@@ -16,119 +13,139 @@ jobs:
     runs-on: ubuntu-24.04-arm
     container:
       image: ubuntu:24.04
- # build-sqa-tools-ubuntu-arm:
- #   runs-on: ubuntu-latest
- #   container:
- #     image: ghcr.io/project-chip/chip-build-crosscompile:81
+      # keep root so we can apt-get; fix git discovery across mount boundaries
+      env:
+        GIT_DISCOVERY_ACROSS_FILESYSTEM: "1"
+        DEBIAN_FRONTEND: noninteractive
 
     steps:
+      # 0) Base container is minimal: install essentials FIRST (before checkout)
+      - name: Install base dependencies (git/python/etc.)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          apt-get update -y
+          apt-get install -y --no-install-recommends \
+            ca-certificates curl wget unzip xz-utils jq \
+            git openssh-client \
+            python3 python3-pip python3-venv python-is-python3 \
+            build-essential pkg-config \
+            cmake ninja-build \
+            clang lld
+          update-ca-certificates
+          git --version
+          python --version
+
+      # 1) Checkout (use v4; v5 is not a published major version today)
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           submodules: false
+          fetch-depth: 0
 
-      - name: Verify ARM runner
+      - name: Verify ARM runner + workspace
         if: always()
         shell: bash
         run: |
+          set -euxo pipefail
           echo "Runner arch: $(uname -m)"
           uname -a
-
-      - name: Debug workspace path
-        if: always()
-        shell: bash
-        run: |
-          echo "=== GITHUB_WORKSPACE ==="
           echo "GITHUB_WORKSPACE='${GITHUB_WORKSPACE:-<unset>}'"
-          echo ""
-          echo "=== PWD ==="
           echo "PWD=$(pwd)"
-          echo ""
-          echo "=== Root ls ==="
-          ls -la / || true
-          echo ""
-          echo "=== /__w contents (if present) ==="
-          ls -la /__w 2>/dev/null || echo "/__w not found or not readable"
-          echo ""
-          echo "=== /__w/matter_extension (if present) ==="
-          ls -la /__w/matter_extension 2>/dev/null || echo "not found"
-          echo ""
-          echo "=== /__w/*/matter_extension (if present) ==="
-          ls -la /__w/*/matter_extension 2>/dev/null || echo "not found"
-          echo ""
-          echo "=== GITHUB_* env vars ==="
-          env | grep -E '^GITHUB_' || true
+          ls -la "$GITHUB_WORKSPACE"
+          echo "Mounts involving /__w (if any):"
+          mount | grep -E '/__w|GITHUB_WORKSPACE' || true
+          id
 
-      - name: Debug .git in workspace
-        if: always()
+      # 2) Make git happy inside container mounts
+      - name: Mark repo as safe + verify .git
         shell: bash
         run: |
-          echo "=== Checking .git in GITHUB_WORKSPACE ==="
-          cd "$GITHUB_WORKSPACE"
-          echo "PWD=$(pwd)"
-          ls -la .git 2>/dev/null || echo ".git missing or not readable"
-          git status 2>&1 || true
-
-      - name: Install Git and mark repository as safe
-        if: always()
-        shell: bash
-        run: |
-          apt-get update -qq && apt-get install -y -qq git
+          set -euxo pipefail
           cd "$GITHUB_WORKSPACE"
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          echo "Listing .git:"
+          ls -la .git || true
+          echo "Git status:"
+          git status
 
+      # 3) Init the one submodule you need
       - name: Initialize required submodules
-        if: always()
         shell: bash
         run: |
+          set -euxo pipefail
           cd "$GITHUB_WORKSPACE"
-          git submodule update --init third_party/matter_sdk
+          git submodule update --init --depth 1 third_party/matter_sdk
+          test -d third_party/matter_sdk
+          ls -la third_party/matter_sdk
 
+      # 4) Pull Matter submodules
       - name: Checkout matter_sdk submodules
-        if: always()
         shell: bash
         run: |
+          set -euxo pipefail
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
-          ./scripts/checkout_submodules.py --platform linux
+          python ./scripts/checkout_submodules.py --platform linux
 
+      # 5) Bootstrap (your existing action)
       - name: Run bootstrap action
-        if: always()
         uses: SiliconLabsSoftware/matter_build_action/bootstrap@v2.0.0
 
+      # 6) Build directly in this container (do NOT use run_in_build_env.sh)
       - name: Build chip-tool
-        if: always()
         shell: bash
         run: |
+          set -euxo pipefail
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
-          ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-chip-tool-ipv6only-clang build"
+          source ./scripts/activate.sh
+          ./scripts/build/build_examples.py \
+            --target linux-arm64-chip-tool-ipv6only-clang \
+            build
 
       - name: Build OTA provider
-        if: always()
         shell: bash
         run: |
+          set -euxo pipefail
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
-          ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-ota-provider-ipv6only-clang build"
+          source ./scripts/activate.sh
+          ./scripts/build/build_examples.py \
+            --target linux-arm64-ota-provider-ipv6only-clang \
+            build
 
       - name: Build all-clusters app
-        if: always()
         shell: bash
         run: |
+          set -euxo pipefail
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
-          ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-all-clusters-clang build"
+          source ./scripts/activate.sh
+          ./scripts/build/build_examples.py \
+            --target linux-arm64-all-clusters-clang \
+            build
 
-      - name: Build summary
+      - name: Build summary (artifact presence)
         if: always()
         shell: bash
         run: |
+          set -euxo pipefail
           cd "$GITHUB_WORKSPACE"
-          echo "## Build summary"
-          echo ""
-          echo "**Status:** SUCCESS"
-          echo ""
-          echo "All SQA tools built successfully on native Ubuntu ARM (no CSA cross-compile image):"
-          echo "- chip-tool"
-          echo "- chip-ota-provider-app"
-          echo "- chip-all-clusters-app"
-          ls -la third_party/matter_sdk/out/linux-arm64-chip-tool-ipv6only-clang/chip-tool \
-               third_party/matter_sdk/out/linux-arm64-ota-provider-ipv6only-clang/chip-ota-provider-app \
-               third_party/matter_sdk/out/linux-arm64-all-clusters-clang/chip-all-clusters-app
+          echo "## Build summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Built on native Ubuntu ARM runner, inside ubuntu:24.04 container." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          CHIP_TOOL="third_party/matter_sdk/out/linux-arm64-chip-tool-ipv6only-clang/chip-tool"
+          OTA_PROV="third_party/matter_sdk/out/linux-arm64-ota-provider-ipv6only-clang/chip-ota-provider-app"
+          ALL_CLUS="third_party/matter_sdk/out/linux-arm64-all-clusters-clang/chip-all-clusters-app"
+
+          for f in "$CHIP_TOOL" "$OTA_PROV" "$ALL_CLUS"; do
+            if [ -f "$f" ]; then
+              echo "- ✅ $(basename "$f") at \`$f\`" >> "$GITHUB_STEP_SUMMARY"
+              ls -la "$f"
+              file "$f" || true
+            else
+              echo "- ❌ Missing: \`$f\`" >> "$GITHUB_STEP_SUMMARY"
+              echo "Listing parent dir:" >> "$GITHUB_STEP_SUMMARY"
+              ls -la "$(dirname "$f")" || true
+              exit 1
+            fi
+          done
