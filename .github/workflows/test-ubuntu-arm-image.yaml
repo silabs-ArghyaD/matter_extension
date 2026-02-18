@@ -102,7 +102,9 @@ jobs:
         run: |
           set -euxo pipefail
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
+          set +u
           source ./scripts/activate.sh
+          set -u
           ./scripts/build/build_examples.py \
             --target linux-arm64-chip-tool-ipv6only-clang \
             build
