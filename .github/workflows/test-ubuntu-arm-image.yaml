@@ -32,7 +32,7 @@ jobs:
       - name: Mark repository as safe for Git
         shell: bash
         run: |
-          git config --global --add safe.directory ${{ github.workspace }}
+          git config --global --add safe.directory "$(pwd)"
 
       - name: Initialize required submodules
         shell: bash
