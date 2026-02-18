@@ -37,19 +37,19 @@ jobs:
         shell: bash
         run: |
           apt-get update -qq && apt-get install -y -qq git
+          cd "$GITHUB_WORKSPACE"
           git config --global --add safe.directory "$(pwd)"
 
       - name: Initialize required submodules
         shell: bash
-        working-directory: ${{ github.workspace }}
         run: |
+          cd "$GITHUB_WORKSPACE"
           git submodule update --init third_party/matter_sdk
 
       - name: Checkout matter_sdk submodules
         shell: bash
-        working-directory: ${{ github.workspace }}
         run: |
-          cd third_party/matter_sdk
+          cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
           ./scripts/checkout_submodules.py --platform linux
 
       - name: Run bootstrap action
@@ -57,27 +57,26 @@ jobs:
 
       - name: Build chip-tool
         shell: bash
-        working-directory: ${{ github.workspace }}
         run: |
-          cd third_party/matter_sdk
+          cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
           ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-chip-tool-ipv6only-clang build"
 
       - name: Build OTA provider
         shell: bash
-        working-directory: ${{ github.workspace }}
         run: |
-          cd third_party/matter_sdk
+          cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
           ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-ota-provider-ipv6only-clang build"
 
       - name: Build all-clusters app
         shell: bash
         run: |
-          cd third_party/matter_sdk
+          cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
           ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-all-clusters-clang build"
 
       - name: Build summary
         shell: bash
         run: |
+          cd "$GITHUB_WORKSPACE"
           echo "## Build summary"
           echo ""
           echo "**Status:** SUCCESS"
