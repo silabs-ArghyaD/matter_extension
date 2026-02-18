@@ -19,7 +19,7 @@ jobs:
         DEBIAN_FRONTEND: noninteractive
 
     steps:
-      # 0) Base container is minimal: install essentials FIRST (before checkout)
+      # 0) Base container is minimal: install essentials FIRST (before checkout) 
       - name: Install base dependencies (git/python/etc.)
         shell: bash
         run: |
