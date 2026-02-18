@@ -32,7 +32,9 @@ jobs:
             build-essential pkg-config \
             cmake ninja-build \
             clang lld \
-            libglib2.0-0
+            libglib2.0-0 \
+            libgirepository-1.0-1 \
+            gir1.2-glib-2.0
           update-ca-certificates
           git --version
           python --version
