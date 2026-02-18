@@ -1,6 +1,6 @@
 [submodule "third_party/matter_sdk"]
     path = third_party/matter_sdk
-    url = git@github.com:silabs-ArghyaD/matter_sdk.git
+    url = https://github.com/silabs-ArghyaD/matter_sdk.git
 	branch = test/ubuntu-arm-image
 [submodule "third_party/simplicity_sdk"]
 	path = third_party/simplicity_sdk
