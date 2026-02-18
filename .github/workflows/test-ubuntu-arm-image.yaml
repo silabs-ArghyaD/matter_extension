@@ -42,6 +42,11 @@ jobs:
           openssl \
           libssl-dev \
           zlib1g-dev
+          set -euxo pipefail
+          command -v gdbus-codegen
+          ls -l "$(command -v gdbus-codegen)"
+          dpkg -S "$(command -v gdbus-codegen)"
+          gdbus-codegen --version || true
           update-ca-certificates
           git --version
           python --version
@@ -110,6 +115,11 @@ jobs:
           set +u
           source ./scripts/activate.sh
           set -u
+          echo "PATH=$PATH"
+          hash -r
+          command -v gdbus-codegen
+          ls -l "$(command -v gdbus-codegen)"
+          gdbus-codegen --version || true
           ./scripts/build/build_examples.py \
             --target linux-arm64-chip-tool-ipv6only-clang \
             build
