@@ -33,8 +33,10 @@ jobs:
           build-essential pkg-config \
           cmake ninja-build \
           clang lld \
+          glib2.0-bin \
           libffi-dev \
           libglib2.0-0 \
+          libglib2.0-bin \
           libgirepository-1.0-1 \
           gir1.2-glib-2.0 \
           openssl \
