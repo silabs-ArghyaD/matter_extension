@@ -115,6 +115,7 @@ jobs:
           set +u
           source ./scripts/activate.sh
           set -u
+          export PATH="/usr/bin:/bin:$PATH"
           echo "PATH=$PATH"
           hash -r
           command -v gdbus-codegen
