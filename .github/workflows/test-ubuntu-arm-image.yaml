@@ -36,7 +36,10 @@ jobs:
           libffi-dev \
           libglib2.0-0 \
           libgirepository-1.0-1 \
-          gir1.2-glib-2.0
+          gir1.2-glib-2.0 \
+          openssl \
+          libssl-dev \
+          zlib1g-dev
           update-ca-certificates
           git --version
           python --version
