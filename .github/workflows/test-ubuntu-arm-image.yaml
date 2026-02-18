@@ -13,8 +13,9 @@ on:
 
 jobs:
   build-sqa-tools-ubuntu-arm:
-    name: Build SQA tools on Ubuntu ARM (native)
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/project-chip/chip-build-crosscompile:81
 
     steps:
       - name: Checkout repository
