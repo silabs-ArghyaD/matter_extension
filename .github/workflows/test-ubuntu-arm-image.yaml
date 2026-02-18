@@ -1,0 +1,81 @@
+# Test building SQA tools (chip-tool, ota-provider, all-clusters) on native Ubuntu ARM
+# without the CSA cross-compile image. Runs only on branch test/ubuntu-arm-image.
+
+name: Test Ubuntu ARM Image
+
+on:
+  push:
+    branches:
+      - test/ubuntu-arm-image
+  pull_request:
+    branches:
+      - test/ubuntu-arm-image
+
+jobs:
+  build-sqa-tools-ubuntu-arm:
+    name: Build SQA tools on Ubuntu ARM (native)
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: false
+
+      - name: Verify ARM runner
+        shell: bash
+        run: |
+          echo "Runner arch: $(uname -m)"
+          uname -a
+
+      - name: Mark repository as safe for Git
+        shell: bash
+        run: |
+          git config --global --add safe.directory ${{ github.workspace }}
+
+      - name: Initialize required submodules
+        shell: bash
+        run: |
+          git submodule update --init third_party/matter_sdk
+
+      - name: Checkout matter_sdk submodules
+        shell: bash
+        run: |
+          cd third_party/matter_sdk
+          ./scripts/checkout_submodules.py --platform linux
+
+      - name: Run bootstrap action
+        uses: SiliconLabsSoftware/matter_build_action/bootstrap@v2.0.0
+
+      - name: Build chip-tool
+        shell: bash
+        run: |
+          cd third_party/matter_sdk
+          ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-chip-tool-ipv6only-clang build"
+
+      - name: Build OTA provider
+        shell: bash
+        run: |
+          cd third_party/matter_sdk
+          ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-ota-provider-ipv6only-clang build"
+
+      - name: Build all-clusters app
+        shell: bash
+        run: |
+          cd third_party/matter_sdk
+          ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-all-clusters-clang build"
+
+      - name: Build summary
+        shell: bash
+        run: |
+          echo "## Build summary"
+          echo ""
+          echo "**Status:** SUCCESS"
+          echo ""
+          echo "All SQA tools built successfully on native Ubuntu ARM (no CSA cross-compile image):"
+          echo "- chip-tool"
+          echo "- chip-ota-provider-app"
+          echo "- chip-all-clusters-app"
+          ls -la third_party/matter_sdk/out/linux-arm64-chip-tool-ipv6only-clang/chip-tool \
+               third_party/matter_sdk/out/linux-arm64-ota-provider-ipv6only-clang/chip-ota-provider-app \
+               third_party/matter_sdk/out/linux-arm64-all-clusters-clang/chip-all-clusters-app
