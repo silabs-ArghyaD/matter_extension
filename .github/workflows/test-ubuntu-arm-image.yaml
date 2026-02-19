@@ -18,10 +18,14 @@ jobs:
         DEBIAN_FRONTEND: noninteractive
 
     steps:
-      - name: Install base dependencies (git/python/etc.)
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Install base dependencies
         shell: bash
         run: |
-          set -euxo pipefail
           apt-get update -y
           apt-get install -y --no-install-recommends \
             ca-certificates curl xz-utils jq \
@@ -36,30 +40,19 @@ jobs:
             zlib1g-dev
           rm -rf /var/lib/apt/lists/*
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: false
-          fetch-depth: 0
-
       - name: Mark repo as safe
         shell: bash
         run: |
-          set -euxo pipefail
-          cd "$GITHUB_WORKSPACE"
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Initialize required submodules
         shell: bash
         run: |
-          set -euxo pipefail
-          cd "$GITHUB_WORKSPACE"
-          git submodule update --init --depth 1 third_party/matter_sdk
+          git submodule update --init third_party/matter_sdk
 
       - name: Checkout matter_sdk submodules
         shell: bash
         run: |
-          set -euxo pipefail
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
           python ./scripts/checkout_submodules.py --platform linux
 
@@ -69,71 +62,17 @@ jobs:
       - name: Build chip-tool
         shell: bash
         run: |
-          set -euxo pipefail
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
-          set +u
-          source ./scripts/activate.sh
-          set -u
-
-          python3 -m pip install --upgrade pip
-          python3 -m pip install --upgrade click
-
-          ./scripts/build/build_examples.py \
-            --target linux-arm64-chip-tool-ipv6only-clang \
-            build
+          ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-chip-tool-ipv6only-clang build"
 
       - name: Build OTA provider
         shell: bash
         run: |
-          set -euxo pipefail
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
-          set +u
-          source ./scripts/activate.sh
-          set -u
-
-          python3 -m pip install --upgrade pip
-          python3 -m pip install --upgrade click
-
-          ./scripts/build/build_examples.py \
-            --target linux-arm64-ota-provider-ipv6only-clang \
-            build
+          ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-ota-provider-ipv6only-clang build"
 
       - name: Build all-clusters app
         shell: bash
         run: |
-          set -euxo pipefail
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
-          set +u
-          source ./scripts/activate.sh
-          set -u
-
-          python3 -m pip install --upgrade pip
-          python3 -m pip install --upgrade click
-
-          ./scripts/build/build_examples.py \
-            --target linux-arm64-all-clusters-clang \
-            build
-
-      - name: Build summary (artifact presence)
-        if: always()
-        shell: bash
-        run: |
-          set -euxo pipefail
-          cd "$GITHUB_WORKSPACE"
-          echo "## Build summary" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Built on native Ubuntu ARM runner, inside ubuntu:24.04 container." >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-
-          CHIP_TOOL="third_party/matter_sdk/out/linux-arm64-chip-tool-ipv6only-clang/chip-tool"
-          OTA_PROV="third_party/matter_sdk/out/linux-arm64-ota-provider-ipv6only-clang/chip-ota-provider-app"
-          ALL_CLUS="third_party/matter_sdk/out/linux-arm64-all-clusters-clang/chip-all-clusters-app"
-
-          for f in "$CHIP_TOOL" "$OTA_PROV" "$ALL_CLUS"; do
-            if [ -f "$f" ]; then
-              echo "- ✅ $(basename "$f") at \`$f\`" >> "$GITHUB_STEP_SUMMARY"
-            else
-              echo "- ❌ Missing: \`$f\`" >> "$GITHUB_STEP_SUMMARY"
-              exit 1
-            fi
-          done
+          ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-all-clusters-clang build"
