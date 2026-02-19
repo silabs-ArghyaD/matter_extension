@@ -45,13 +45,11 @@ jobs:
       - name: Initialize required submodules
         shell: bash
         run: |
-          set -euxo pipefail
           git submodule update --init third_party/matter_sdk
 
       - name: Checkout matter_sdk submodules
         shell: bash
         run: |
-          set -euxo pipefail
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
           python ./scripts/checkout_submodules.py --platform linux
 
@@ -62,22 +60,16 @@ jobs:
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
-          # python3 -m pip install --upgrade pip
-          # python3 -m pip install --upgrade click
           ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-chip-tool-ipv6only-clang build"
 
       - name: Build OTA provider
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
-          python3 -m pip install --upgrade pip
-          python3 -m pip install --upgrade click
-          ./scripts/build/build_examples.py --target linux-arm64-ota-provider-ipv6only-clang build
+          ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-ota-provider-ipv6only-clang build"
 
       - name: Build all-clusters app
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
-          python3 -m pip install --upgrade pip
-          python3 -m pip install --upgrade click
-          ./scripts/build/build_examples.py --target linux-arm64-all-clusters-clang build
+          ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-all-clusters-clang build"
