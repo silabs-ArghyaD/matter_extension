@@ -19,7 +19,7 @@ jobs:
         shell: bash
         run: |
           apt-get update -y
-          apt-get install -y --no-install-recommends 
+          apt-get install -y --no-install-recommends \
             ca-certificates git \
             curl xz-utils jq \
             openssh-client \
