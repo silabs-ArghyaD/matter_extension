@@ -42,14 +42,14 @@ jobs:
           openssl \
           libssl-dev \
           zlib1g-dev
-          set -euxo pipefail
-          command -v gdbus-codegen
-          ls -l "$(command -v gdbus-codegen)"
-          dpkg -S "$(command -v gdbus-codegen)"
-          gdbus-codegen --version || true
-          update-ca-certificates
-          git --version
-          python --version
+ #         set -euxo pipefail
+ #         command -v gdbus-codegen
+ #         ls -l "$(command -v gdbus-codegen)"
+ #         dpkg -S "$(command -v gdbus-codegen)"
+ #         gdbus-codegen --version || true
+ #         update-ca-certificates
+ #         git --version
+ #         python --version
 
       # 1) Checkout (use v4; v5 is not a published major version today)
       - name: Checkout repository
