@@ -3,10 +3,10 @@ name: Test Ubuntu ARM Native (No Container)
 on:
   push:
     branches:
-      - test/ubuntu-arm-native
+      - test/ubuntu-arm-image
   pull_request:
     branches:
-      - test/ubuntu-arm-native
+      - test/ubuntu-arm-image
 
 jobs:
   build-sqa-tools-ubuntu-arm-native:
@@ -19,7 +19,7 @@ jobs:
           submodules: false
           fetch-depth: 0
 
-      - name: Install base dependencies (git/python/etc.)
+      - name: Install base dependencies
         shell: bash
         run: |
           set -euxo pipefail
