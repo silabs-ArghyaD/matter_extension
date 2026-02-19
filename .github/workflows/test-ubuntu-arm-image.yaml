@@ -30,6 +30,7 @@ jobs:
             build-essential pkg-config \
             cmake ninja-build \
             clang lld \
+            libgirepository-1.0-1 libgirepository1.0-dev \
             libglib2.0-dev libglib2.0-dev-bin \
             libssl-dev \
             zlib1g-dev
