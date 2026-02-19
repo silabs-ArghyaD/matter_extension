@@ -114,22 +114,9 @@ jobs:
           set +u
           source ./scripts/activate.sh
           set -u
-          export PATH="/usr/bin:/bin:$PATH"
-          echo "PATH=$PATH"
-          hash -r
-          set -euxo pipefail
           
-          echo "-.-.-.-.-.-.-.-.-DEBUG-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-" 
-          ls -l /usr/bin/gdbus-codegen /bin/gdbus-codegen || true
-          dpkg -S gdbus-codegen || true
-          dpkg -L libglib2.0-bin | grep -E 'gdbus-codegen$' || true
-          apt-cache policy libglib2.0-bin | sed -n '1,120p'
-          find /usr -maxdepth 4 -type f -name 'gdbus-codegen' -o -name 'gdbus-codegen*' 2>/dev/null | head -n 50
-
-           echo "-.-.-.-.-.-.-.-.-GDBUS-CODEGEN-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-"          
-          command -v gdbus-codegen
-          ls -l "$(command -v gdbus-codegen)"
-          gdbus-codegen --version || true
+          python3 -m pip install --upgrade pip
+          python3 -m pip install click
 
           echo "-.-.-.-.-.-.-.-.-BUILD SCRIPT-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-" 
           ./scripts/build/build_examples.py \
