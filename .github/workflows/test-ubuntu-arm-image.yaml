@@ -43,11 +43,13 @@ jobs:
       - name: Mark repo as safe
         shell: bash
         run: |
+          cd "$GITHUB_WORKSPACE"
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Initialize required submodules
         shell: bash
         run: |
+          cd "$GITHUB_WORKSPACE"
           git submodule update --init third_party/matter_sdk
 
       - name: Checkout matter_sdk submodules
