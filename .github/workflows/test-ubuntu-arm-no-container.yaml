@@ -76,9 +76,7 @@ jobs:
         run: |
           set -euxo pipefail
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
-          set +u
           source ./scripts/activate.sh
-          set -u
           python3 -m pip install --upgrade pip
           python3 -m pip install --upgrade click
           ./scripts/build/build_examples.py --target linux-arm64-ota-provider-ipv6only-clang build
