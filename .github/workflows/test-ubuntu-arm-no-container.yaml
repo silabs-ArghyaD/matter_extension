@@ -76,6 +76,7 @@ jobs:
         run: |
           set -euxo pipefail
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
+          export PW_ENVIRONMENT_ROOT="${PW_ENVIRONMENT_ROOT:-$PWD/.environment}"
           source ./scripts/activate.sh
           python3 -m pip install --upgrade pip
           python3 -m pip install --upgrade click
