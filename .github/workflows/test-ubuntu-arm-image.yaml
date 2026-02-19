@@ -18,6 +18,12 @@ jobs:
         DEBIAN_FRONTEND: noninteractive
 
     steps:
+      - name: Install Git
+        shell: bash
+        run: |
+          apt-get update -y
+          apt-get install -y --no-install-recommends git
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -29,7 +35,7 @@ jobs:
           apt-get update -y
           apt-get install -y --no-install-recommends \
             ca-certificates curl xz-utils jq \
-            git openssh-client \
+            openssh-client \
             python3 python3-pip python3-venv python-is-python3 python3-dev \
             build-essential pkg-config \
             cmake ninja-build \
