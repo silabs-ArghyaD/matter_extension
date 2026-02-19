@@ -62,9 +62,9 @@ jobs:
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
-          python3 -m pip install --upgrade pip
-          python3 -m pip install --upgrade click
-          ./scripts/build/build_examples.py --target linux-arm64-chip-tool-ipv6only-clang build
+          # python3 -m pip install --upgrade pip
+          # python3 -m pip install --upgrade click
+          ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-chip-tool-ipv6only-clang build"
 
       - name: Build OTA provider
         shell: bash
