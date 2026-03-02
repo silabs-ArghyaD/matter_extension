@@ -22,15 +22,10 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y --no-install-recommends \
-            ca-certificates \
-            python3-dev \
-            cmake ninja-build \
-            clang lld \
-            libgirepository-1.0-1 libgirepository1.0-dev \
-            libglib2.0-dev libglib2.0-dev-bin \
-            libssl-dev \
-            zlib1g-dev
-          sudo rm -rf /var/lib/apt/lists/*
+            libgirepository-1.0-1 \
+            libgirepository1.0-dev \
+            libglib2.0-dev \
+            libglib2.0-dev-bin
 
       - name: Mark repo as safe
         shell: bash
