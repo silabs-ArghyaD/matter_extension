@@ -1,0 +1,64 @@
+name: Test Ubuntu Cross Compiled
+
+on:
+  push:
+    branches:
+      - test/ubuntu-arm-2
+  pull_request:
+    branches:
+      - test/ubuntu-arm-2
+
+jobs:
+  build-sqa-tools-ubuntu-arm-native:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/project-chip/chip-build-crosscompile:81
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Mark repo as safe
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Initialize required submodules
+        shell: bash
+        run: |
+          git submodule update --init third_party/matter_sdk
+
+      - name: Checkout matter_sdk submodules
+        shell: bash
+        run: |
+          cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
+          python ./scripts/checkout_submodules.py --platform linux
+
+      - name: Run bootstrap action
+        uses: SiliconLabsSoftware/matter_build_action/bootstrap@v2.0.0
+
+      - name: Build chip-tool
+        shell: bash
+        run: |
+          cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
+          ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-chip-tool-ipv6only-clang build"
+
+      - name: Upload chiptool artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sqa-tools-cross-compiled
+          path: third_party/matter_sdk/out/linux-arm64-chip-tool-ipv6only-clang/chip-tool
+
+      - name: Build OTA provider
+        shell: bash
+        run: |
+          cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
+          ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-ota-provider-ipv6only-clang build"
+
+      - name: Build all-clusters app
+        shell: bash
+        run: |
+          cd "$GITHUB_WORKSPACE/third_party/matter_sdk"
+          ./scripts/run_in_build_env.sh "./scripts/build/build_examples.py --target linux-arm64-all-clusters-clang build"
