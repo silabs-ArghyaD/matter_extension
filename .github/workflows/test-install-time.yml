@@ -5,6 +5,9 @@ name: Test install-tools timing
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - test/install-tools
 
 jobs:
   measure-install-time:
