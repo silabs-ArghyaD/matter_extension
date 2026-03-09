@@ -1,0 +1,214 @@
+# Workflow to measure step timings of install-tools and find delay root causes.
+# Check the job log for STEP_*_START/END timestamps and duration summaries.
+
+name: Test install-tools timing
+
+on:
+  workflow_dispatch:
+
+jobs:
+  measure-install-time:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Record job start
+        run: |
+          echo "JOB_START_EPOCH=$(date -u +%s)" >> $GITHUB_ENV
+          echo "JOB_START_ISO=$(date -u -Iseconds)" >> $GITHUB_ENV
+          echo "=== JOB START: $(date -u -Iseconds) ==="
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/actions/install-tools
+            slc
+
+      - name: STEP 1 - Set CONAN_HOME (start)
+        run: echo "STEP1_START=$(date -u +%s)" >> $GITHUB_ENV; echo "STEP1_START_ISO=$(date -u -Iseconds)"
+
+      - name: Set CONAN_HOME
+        run: |
+          echo "CONAN_HOME=~/.silabs/slt/installs/conan" >> $GITHUB_ENV
+
+      - name: STEP 1 - Set CONAN_HOME (end)
+        run: |
+          END=$(date -u +%s)
+          DURATION=$((END - STEP1_START))
+          echo "STEP1_END=$END" >> $GITHUB_ENV
+          echo "STEP1_DURATION=$DURATION" >> $GITHUB_ENV
+          echo "STEP1_DURATION=${DURATION}s"
+
+      - name: STEP 2 - Install ZAP (start)
+        run: echo "STEP2_START=$(date -u +%s)" >> $GITHUB_ENV; echo "STEP2_START_ISO=$(date -u -Iseconds)"
+
+      - name: Install ZAP
+        run: |
+          ZAP_VERSION=$(python3 slc/script/get_zap_version.py --docker)
+          wget "https://github.com/project-chip/zap/releases/download/${ZAP_VERSION}/zap-linux-x64.zip"
+          unzip zap-linux-x64.zip -d /tmp/zap-linux-x64
+          rm zap-linux-x64.zip
+
+      - name: STEP 2 - Install ZAP (end)
+        run: |
+          END=$(date -u +%s)
+          DURATION=$((END - STEP2_START))
+          echo "STEP2_END=$END" >> $GITHUB_ENV
+          echo "STEP2_DURATION=$DURATION" >> $GITHUB_ENV
+          echo "STEP2_DURATION=${DURATION}s"
+
+      - name: STEP 3 - Setup SLT (start)
+        run: echo "STEP3_START=$(date -u +%s)" >> $GITHUB_ENV; echo "STEP3_START_ISO=$(date -u -Iseconds)"
+
+      - name: Setup SLT
+        id: setup-action
+        uses: SiliconLabsSoftware/action-setup-slt@v1
+
+      - name: STEP 3 - Setup SLT (end)
+        run: |
+          END=$(date -u +%s)
+          DURATION=$((END - STEP3_START))
+          echo "STEP3_END=$END" >> $GITHUB_ENV
+          echo "STEP3_DURATION=$DURATION" >> $GITHUB_ENV
+          echo "STEP3_DURATION=${DURATION}s"
+
+      - name: STEP 4 - Set Environment Variables (start)
+        run: echo "STEP4_START=$(date -u +%s)" >> $GITHUB_ENV
+
+      - name: Set Environment Variables (post-SLT)
+        run: |
+          echo "STUDIO_ADAPTER_PACK_PATH=/tmp/zap-linux-x64" >> $GITHUB_ENV
+          echo "SLT_PATH=${{ steps.setup-action.outputs.slt-path }}" >> $GITHUB_ENV
+          echo "/tmp/zap-linux-x64" >> $GITHUB_PATH
+          echo "${{ steps.setup-action.outputs.slt-path }}" >> $GITHUB_PATH
+
+      - name: STEP 4 - Set Environment Variables (end)
+        run: |
+          END=$(date -u +%s)
+          DURATION=$((END - STEP4_START))
+          echo "STEP4_END=$END" >> $GITHUB_ENV
+          echo "STEP4_DURATION=$DURATION" >> $GITHUB_ENV
+          echo "STEP4_DURATION=${DURATION}s"
+
+      - name: STEP 5 - Update SLT (start)
+        run: echo "STEP5_START=$(date -u +%s)" >> $GITHUB_ENV; echo "STEP5_START_ISO=$(date -u -Iseconds)"
+
+      - name: Update SLT
+        run: slt update --self
+
+      - name: STEP 5 - Update SLT (end)
+        run: |
+          END=$(date -u +%s)
+          DURATION=$((END - STEP5_START))
+          echo "STEP5_END=$END" >> $GITHUB_ENV
+          echo "STEP5_DURATION=$DURATION" >> $GITHUB_ENV
+          echo "STEP5_DURATION=${DURATION}s"
+
+      - name: STEP 6 - Install slc-cli (start)
+        run: echo "STEP6_START=$(date -u +%s)" >> $GITHUB_ENV; echo "STEP6_START_ISO=$(date -u -Iseconds)"
+
+      - name: Install slc-cli
+        run: |
+          MAX_ATTEMPTS=3
+          RETRY_DELAY=30
+
+          for attempt in $(seq 1 $MAX_ATTEMPTS); do
+            echo "Attempt $attempt of $MAX_ATTEMPTS..."
+            if slt install slc-cli; then
+              echo "Successfully installed slc-cli"
+              exit 0
+            fi
+
+            if [ $attempt -lt $MAX_ATTEMPTS ]; then
+              echo "Failed. Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+            fi
+          done
+
+          echo "Failed to install slc-cli after $MAX_ATTEMPTS attempts"
+          exit 1
+
+      - name: STEP 6 - Install slc-cli (end)
+        run: |
+          END=$(date -u +%s)
+          DURATION=$((END - STEP6_START))
+          echo "STEP6_END=$END" >> $GITHUB_ENV
+          echo "STEP6_DURATION=$DURATION" >> $GITHUB_ENV
+          echo "STEP6_DURATION=${DURATION}s"
+
+      - name: STEP 7 - Set env (SLC_CLI_PATH, JAVA_HOME) (start)
+        run: echo "STEP7_START=$(date -u +%s)" >> $GITHUB_ENV
+
+      - name: Set Environment Variables (SLC_CLI, JAVA)
+        run: |
+          SLC_CLI_PATH=$(slt where slc-cli)
+          echo "SLC_CLI_PATH=$SLC_CLI_PATH" >> $GITHUB_ENV
+          JAVA_HOME=$(slt where java21)
+          echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
+          echo "$SLC_CLI_PATH" >> $GITHUB_PATH
+          if [ -n "$JAVA_HOME" ]; then
+            echo "$JAVA_HOME/jre/bin" >> $GITHUB_PATH
+          fi
+
+      - name: STEP 7 - Set env (end)
+        run: |
+          END=$(date -u +%s)
+          DURATION=$((END - STEP7_START))
+          echo "STEP7_END=$END" >> $GITHUB_ENV
+          echo "STEP7_DURATION=$DURATION" >> $GITHUB_ENV
+          echo "STEP7_DURATION=${DURATION}s"
+
+      - name: STEP 8 - Install commander (start)
+        run: echo "STEP8_START=$(date -u +%s)" >> $GITHUB_ENV; echo "STEP8_START_ISO=$(date -u -Iseconds)"
+
+      - name: Install commander
+        run: |
+          slt install commander
+          COMMANDER_PATH=$(slt where commander)
+          echo "COMMANDER_PATH=$COMMANDER_PATH" >> $GITHUB_ENV
+          echo "$COMMANDER_PATH" >> $GITHUB_PATH
+
+      - name: STEP 8 - Install commander (end)
+        run: |
+          END=$(date -u +%s)
+          DURATION=$((END - STEP8_START))
+          echo "STEP8_END=$END" >> $GITHUB_ENV
+          echo "STEP8_DURATION=$DURATION" >> $GITHUB_ENV
+          echo "STEP8_DURATION=${DURATION}s"
+
+      - name: STEP 9 - Install gcc-arm-none-eabi (start)
+        run: echo "STEP9_START=$(date -u +%s)" >> $GITHUB_ENV; echo "STEP9_START_ISO=$(date -u -Iseconds)"
+
+      - name: Install gcc-arm-none-eabi
+        run: |
+          slt install gcc-arm-none-eabi
+          ARM_GCC_DIR=$(slt where gcc-arm-none-eabi)
+          echo "ARM_GCC_DIR=$ARM_GCC_DIR" >> $GITHUB_ENV
+          echo "$ARM_GCC_DIR/bin" >> $GITHUB_PATH
+
+      - name: STEP 9 - Install gcc-arm-none-eabi (end)
+        run: |
+          END=$(date -u +%s)
+          DURATION=$((END - STEP9_START))
+          echo "STEP9_END=$END" >> $GITHUB_ENV
+          echo "STEP9_DURATION=$DURATION" >> $GITHUB_ENV
+          echo "STEP9_DURATION=${DURATION}s"
+
+      - name: Timing summary
+        if: always()
+        run: |
+          echo "=== TIMING SUMMARY (seconds) ==="
+          echo "Step 1 (Set CONAN_HOME):        ${STEP1_DURATION:-N/A}"
+          echo "Step 2 (Install ZAP):           ${STEP2_DURATION:-N/A}"
+          echo "Step 3 (Setup SLT):             ${STEP3_DURATION:-N/A}"
+          echo "Step 4 (Set env post-SLT):      ${STEP4_DURATION:-N/A}"
+          echo "Step 5 (Update SLT):            ${STEP5_DURATION:-N/A}"
+          echo "Step 6 (Install slc-cli):       ${STEP6_DURATION:-N/A}"
+          echo "Step 7 (Set SLC/JAVA env):       ${STEP7_DURATION:-N/A}"
+          echo "Step 8 (Install commander):     ${STEP8_DURATION:-N/A}"
+          echo "Step 9 (Install gcc-arm):       ${STEP9_DURATION:-N/A}"
+          if [ -n "$JOB_START_EPOCH" ]; then
+            echo "Total job so far:               $(($(date -u +%s) - JOB_START_EPOCH))s"
+          fi
+          echo "=== END TIMING SUMMARY ==="
