@@ -46,7 +46,10 @@ jobs:
                   echo "SLT_PATH=/home/runner/.silabs/slt" >> $GITHUB_ENV
                   echo "/tmp/zap-linux-x64" >> $GITHUB_PATH
                   echo "/home/runner/.silabs/slt/bin" >> $GITHUB_PATH
-                  export PATH="/home/runner/.silabs/slt/bin:$PATH"
+            - name: Set tool paths from cache
+              if: steps.cache.outputs.cache-hit == 'true'
+              shell: bash
+              run: |
                   SLC_CLI_PATH=$(slt where slc-cli)
                   JAVA_HOME=$(slt where java21)
                   COMMANDER_PATH=$(slt where commander)
