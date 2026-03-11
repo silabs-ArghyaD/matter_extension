@@ -37,6 +37,19 @@ jobs:
                       /tmp/zap-linux-x64
                       /home/runner/.silabs/slt
                   key: zap-slt-tools-${{ hashFiles('slc/script/get_zap_version.py') }}-v1
+            - name: Debug cache restore
+              shell: bash
+              run: |
+                  echo "=== PATH ==="
+                  echo "$PATH"
+                  echo "=== Check absolute paths ==="
+                  ls -la /tmp/zap-linux-x64 2>/dev/null || echo "NOT FOUND: /tmp/zap-linux-x64"
+                  ls -la /home/runner/.silabs/slt/bin/slt 2>/dev/null || echo "NOT FOUND: /home/runner/.silabs/slt/bin/slt"
+                  echo "=== Check under workspace (if cache extracted here) ==="
+                  ls -la "$GITHUB_WORKSPACE/tmp/zap-linux-x64" 2>/dev/null || echo "NOT FOUND under workspace/tmp"
+                  ls -la "$GITHUB_WORKSPACE/home/runner/.silabs/slt/bin/slt" 2>/dev/null || echo "NOT FOUND under workspace/home"
+                  echo "=== GITHUB_WORKSPACE ==="
+                  echo "$GITHUB_WORKSPACE"
             - name: Set env from cache
               if: steps.cache.outputs.cache-hit == 'true'
               shell: bash
