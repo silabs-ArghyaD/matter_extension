@@ -76,6 +76,7 @@ jobs:
               shell: bash
               run: |
                 which slt
+                du -sh /home/runner/.local/bin/
             - name: Save ZAP and SLT tools cache
               uses: actions/cache/save@v4
               with:
