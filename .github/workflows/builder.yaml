@@ -56,7 +56,7 @@ jobs:
               run: |
                   echo "CONAN_HOME=/home/runner/.silabs/slt/installs/conan" >> $GITHUB_ENV
                   echo "STUDIO_ADAPTER_PACK_PATH=/tmp/zap-linux-x64" >> $GITHUB_ENV
-                  echo "SLT_PATH=/home/runner/.silabs/slt" >> $GITHUB_ENV
+                  echo "SLT_PATH=/home/runner/.local/bin/slt" >> $GITHUB_ENV
                   echo "/tmp/zap-linux-x64" >> $GITHUB_PATH
                   echo "/home/runner/.local/bin/slt" >> $GITHUB_PATH
             - name: Set tool paths from cache
