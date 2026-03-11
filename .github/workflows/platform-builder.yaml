@@ -80,9 +80,9 @@ jobs:
               uses: actions/cache/save@v4
               with:
                   path: |
-                      /tmp/zap-linux-x64
-                      /home/runner/.silabs/slt
-                      /home/runner/.local/bin/slt
+                      "/tmp/zap-linux-x64"
+                      "/home/runner/.silabs/slt"
+                      "/home/runner/.local/bin/slt"
                   key: zap-slt-tools-${{ hashFiles('slc/script/get_zap_version.py') }}-v1
 
     mg24-build-job:
