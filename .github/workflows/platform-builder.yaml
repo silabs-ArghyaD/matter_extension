@@ -72,6 +72,10 @@ jobs:
                   submodules: "true"
             - name: Install tools
               uses: ./.github/actions/install-tools
+            - name:
+              shell: bash
+              run: |
+                which slt
             - name: Save ZAP and SLT tools cache
               uses: actions/cache/save@v4
               with:
