@@ -1,17 +1,41 @@
-name: Check OTA Flash Space (Lighting App)
+name: Check OTA Flash Space
 
 on:
   push:
     branches:
       - feature/check-ota-space-ci
+  workflow_dispatch:
+    inputs:
+      build-type:
+        description: "Build type"
+        required: true
+        type: choice
+        options:
+          - standard
+          - full
+        default: standard
 
 permissions:
   contents: read
   actions: write
 
 jobs:
-  build-lighting-app-mg24:
-    name: Lighting App (MG24) – build and OTA flash check
+  set-build-type:
+    runs-on: ubuntu-latest
+    outputs:
+      build-type: ${{ steps.set.outputs.build-type }}
+    steps:
+      - id: set
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "build-type=${{ github.event.inputs.build-type }}" >> $GITHUB_OUTPUT
+          else
+            echo "build-type=standard" >> $GITHUB_OUTPUT
+          fi
+
+  ota-check-mg24:
+    name: OTA flash check (MG24)
+    needs: set-build-type
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -25,53 +49,92 @@ jobs:
       - name: Build lighting-app (MG24)
         uses: SiliconLabsSoftware/matter_build_action@v2.0.0
         with:
-          json-file-path: ./.github/silabs-builds-mg24.json
+          json-file-path: ./.github/silabs-builds-mg24-ota.json
           path-to-example-app: slc/apps/lighting-app/thread/lighting-app-series-2.slcw
           example-app: lighting-app
           build-script: "./slc/build.sh"
           output-directory: " "
-          build-type: standard
+          build-type: ${{ needs.set-build-type.outputs.build-type }}
 
-      - name: Check OTA image flash size
+      - name: Build platform-template (MG24)
+        if: needs.set-build-type.outputs.build-type == 'full'
+        uses: SiliconLabsSoftware/matter_build_action@v2.0.0
+        with:
+          json-file-path: ./.github/silabs-builds-mg24-ota.json
+          path-to-example-app: slc/apps/platform-template/thread/platform-template-series-2.slcw
+          example-app: platform-template
+          build-script: "./slc/build.sh"
+          output-directory: " "
+          build-type: full
+
+      - name: Build lock-app (MG24)
+        if: needs.set-build-type.outputs.build-type == 'full'
+        uses: SiliconLabsSoftware/matter_build_action@v2.0.0
+        with:
+          json-file-path: ./.github/silabs-builds-mg24-ota.json
+          path-to-example-app: slc/apps/lock-app/thread/lock-app-series-2.slcw
+          example-app: lock-app
+          build-script: "./slc/build.sh"
+          output-directory: " "
+          build-type: full
+
+      - name: Build light-switch-app (MG24)
+        if: needs.set-build-type.outputs.build-type == 'full'
+        uses: SiliconLabsSoftware/matter_build_action@v2.0.0
+        with:
+          json-file-path: ./.github/silabs-builds-mg24-ota.json
+          path-to-example-app: slc/apps/light-switch-app/thread/light-switch-app-series-2.slcw
+          example-app: light-switch-app
+          build-script: "./slc/build.sh"
+          output-directory: " "
+          build-type: full
+
+      - name: Check OTA image flash size (MG24)
         continue-on-error: true
         run: |
           set -e
-          IMAGE=$(find out -type f -name "*.s37" 2>/dev/null | head -1)
-          if [ -z "$IMAGE" ]; then
-            echo "No .s37 image found under out/, skipping OTA flash size check"
-            exit 0
-          fi
+          PAGE_SIZE=8192
+          AVAILABLE_FLASH=1499136
           if ! command -v commander >/dev/null 2>&1; then
             echo "commander not found, skipping OTA flash size check"
             exit 0
           fi
-          cd /tmp
-          commander gbl create temporary.gbl --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
-          file_size_running=$(stat -c "%s" temporary.gbl)
-          rounded_size_running=$(( 8192 * (file_size_running + 8191) / 8192 ))
-          commander gbl create --compress lzma temporary.gbl --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
-          file_size_ota=$(stat -c "%s" temporary.gbl)
-          rounded_size_ota=$(( 8192 * (file_size_ota + 8191) / 8192 ))
-          available_flash=1499136
-          sum=$(( rounded_size_running + rounded_size_ota ))
-          remaining=$(( available_flash - sum ))
-          echo ""
-          echo "  Platform: MG24"
-          echo "  Image: $IMAGE"
-          echo "  Running image flash consumption:                      $rounded_size_running bytes"
-          echo "  OTA update image (LZMA-compressed) flash consumption: $rounded_size_ota bytes"
-          echo "  Total Remaining:                                      $remaining bytes"
-          echo ""
-          if [ "$sum" -gt "$available_flash" ]; then
-            echo "OTA Update image will NOT fit in the ${available_flash} bytes of available flash space"
-            exit 1
-          else
-            echo "OTA Update image will fit in the ${available_flash} bytes of available flash space"
+          IMAGES=$(find out -type f -name "*.s37" 2>/dev/null)
+          if [ -z "$IMAGES" ]; then
+            echo "No .s37 image found under out/, skipping OTA flash size check"
+            exit 0
           fi
-          rm -f temporary.gbl
+          FAIL=0
+          for IMAGE in $IMAGES; do
+            board=$(echo "$IMAGE" | cut -d'/' -f2)
+            [ -z "$board" ] && continue
+            cd /tmp
+            commander gbl create temporary.gbl --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
+            file_size_running=$(stat -c "%s" temporary.gbl)
+            rounded_running=$(( PAGE_SIZE * (file_size_running + PAGE_SIZE - 1) / PAGE_SIZE ))
+            commander gbl create --compress lzma temporary.gbl --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
+            file_size_ota=$(stat -c "%s" temporary.gbl)
+            rounded_ota=$(( PAGE_SIZE * (file_size_ota + PAGE_SIZE - 1) / PAGE_SIZE ))
+            sum=$(( rounded_running + rounded_ota ))
+            remaining=$(( AVAILABLE_FLASH - sum ))
+            echo ""
+            echo "  Board: $board  Image: $IMAGE"
+            echo "  Running (rounded): $rounded_running B  OTA LZMA (rounded): $rounded_ota B  Remaining: $remaining B"
+            if [ "$sum" -gt "$AVAILABLE_FLASH" ]; then
+              echo "  FAIL: OTA image will NOT fit in ${AVAILABLE_FLASH} B"
+              FAIL=1
+            else
+              echo "  PASS: OTA image fits"
+            fi
+            rm -f temporary.gbl
+          done
+          if [ "$FAIL" -eq 1 ]; then exit 1; fi
+          echo ""
+          echo "All MG24 OTA flash checks passed."
 
-  build-lighting-app-mg26:
-    name: Lighting App (MG26) – build and OTA flash check
+  ota-check-mg26:
+    name: OTA flash check (MG26)
+    needs: set-build-type
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -85,53 +148,92 @@ jobs:
       - name: Build lighting-app (MG26)
         uses: SiliconLabsSoftware/matter_build_action@v2.0.0
         with:
-          json-file-path: ./.github/silabs-builds-mg26.json
+          json-file-path: ./.github/silabs-builds-mg26-ota.json
           path-to-example-app: slc/apps/lighting-app/thread/lighting-app-series-2.slcw
           example-app: lighting-app
           build-script: "./slc/build.sh"
           output-directory: " "
-          build-type: standard
+          build-type: ${{ needs.set-build-type.outputs.build-type }}
 
-      - name: Check OTA image flash size
+      - name: Build platform-template (MG26)
+        if: needs.set-build-type.outputs.build-type == 'full'
+        uses: SiliconLabsSoftware/matter_build_action@v2.0.0
+        with:
+          json-file-path: ./.github/silabs-builds-mg26-ota.json
+          path-to-example-app: slc/apps/platform-template/thread/platform-template-series-2.slcw
+          example-app: platform-template
+          build-script: "./slc/build.sh"
+          output-directory: " "
+          build-type: full
+
+      - name: Build lock-app (MG26)
+        if: needs.set-build-type.outputs.build-type == 'full'
+        uses: SiliconLabsSoftware/matter_build_action@v2.0.0
+        with:
+          json-file-path: ./.github/silabs-builds-mg26-ota.json
+          path-to-example-app: slc/apps/lock-app/thread/lock-app-series-2.slcw
+          example-app: lock-app
+          build-script: "./slc/build.sh"
+          output-directory: " "
+          build-type: full
+
+      - name: Build light-switch-app (MG26)
+        if: needs.set-build-type.outputs.build-type == 'full'
+        uses: SiliconLabsSoftware/matter_build_action@v2.0.0
+        with:
+          json-file-path: ./.github/silabs-builds-mg26-ota.json
+          path-to-example-app: slc/apps/light-switch-app/thread/light-switch-app-series-2.slcw
+          example-app: light-switch-app
+          build-script: "./slc/build.sh"
+          output-directory: " "
+          build-type: full
+
+      - name: Check OTA image flash size (MG26)
         continue-on-error: true
         run: |
           set -e
-          IMAGE=$(find out -type f -name "*.s37" 2>/dev/null | head -1)
-          if [ -z "$IMAGE" ]; then
-            echo "No .s37 image found under out/, skipping OTA flash size check"
-            exit 0
-          fi
+          PAGE_SIZE=8192
+          AVAILABLE_FLASH=3145728
           if ! command -v commander >/dev/null 2>&1; then
             echo "commander not found, skipping OTA flash size check"
             exit 0
           fi
-          cd /tmp
-          commander gbl create temporary.gbl --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
-          file_size_running=$(stat -c "%s" temporary.gbl)
-          rounded_size_running=$(( 8192 * (file_size_running + 8191) / 8192 ))
-          commander gbl create --compress lzma temporary.gbl --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
-          file_size_ota=$(stat -c "%s" temporary.gbl)
-          rounded_size_ota=$(( 8192 * (file_size_ota + 8191) / 8192 ))
-          available_flash=3145728
-          sum=$(( rounded_size_running + rounded_size_ota ))
-          remaining=$(( available_flash - sum ))
-          echo ""
-          echo "  Platform: MG26"
-          echo "  Image: $IMAGE"
-          echo "  Running image flash consumption:                      $rounded_size_running bytes"
-          echo "  OTA update image (LZMA-compressed) flash consumption: $rounded_size_ota bytes"
-          echo "  Total Remaining:                                      $remaining bytes"
-          echo ""
-          if [ "$sum" -gt "$available_flash" ]; then
-            echo "OTA Update image will NOT fit in the ${available_flash} bytes of available flash space"
-            exit 1
-          else
-            echo "OTA Update image will fit in the ${available_flash} bytes of available flash space"
+          IMAGES=$(find out -type f -name "*.s37" 2>/dev/null)
+          if [ -z "$IMAGES" ]; then
+            echo "No .s37 image found under out/, skipping OTA flash size check"
+            exit 0
           fi
-          rm -f temporary.gbl
+          FAIL=0
+          for IMAGE in $IMAGES; do
+            board=$(echo "$IMAGE" | cut -d'/' -f2)
+            [ -z "$board" ] && continue
+            cd /tmp
+            commander gbl create temporary.gbl --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
+            file_size_running=$(stat -c "%s" temporary.gbl)
+            rounded_running=$(( PAGE_SIZE * (file_size_running + PAGE_SIZE - 1) / PAGE_SIZE ))
+            commander gbl create --compress lzma temporary.gbl --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
+            file_size_ota=$(stat -c "%s" temporary.gbl)
+            rounded_ota=$(( PAGE_SIZE * (file_size_ota + PAGE_SIZE - 1) / PAGE_SIZE ))
+            sum=$(( rounded_running + rounded_ota ))
+            remaining=$(( AVAILABLE_FLASH - sum ))
+            echo ""
+            echo "  Board: $board  Image: $IMAGE"
+            echo "  Running (rounded): $rounded_running B  OTA LZMA (rounded): $rounded_ota B  Remaining: $remaining B"
+            if [ "$sum" -gt "$AVAILABLE_FLASH" ]; then
+              echo "  FAIL: OTA image will NOT fit in ${AVAILABLE_FLASH} B"
+              FAIL=1
+            else
+              echo "  PASS: OTA image fits"
+            fi
+            rm -f temporary.gbl
+          done
+          if [ "$FAIL" -eq 1 ]; then exit 1; fi
+          echo ""
+          echo "All MG26 OTA flash checks passed."
 
-  build-lighting-app-siwx:
-    name: Lighting App (917 SiWx) – build and OTA flash check
+  ota-check-siwx:
+    name: OTA flash check (917 SiWx)
+    needs: set-build-type
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -145,45 +247,80 @@ jobs:
       - name: Build lighting-app (917 SiWx)
         uses: SiliconLabsSoftware/matter_build_action@v2.0.0
         with:
-          json-file-path: ./.github/silabs-builds-siwx.json
+          json-file-path: ./.github/silabs-builds-siwx-ota.json
           path-to-example-app: slc/apps/lighting-app/wifi/lighting-app-siwx.slcw
           example-app: lighting-app
           build-script: "./slc/build.sh"
           output-directory: " "
-          build-type: standard
+          build-type: ${{ needs.set-build-type.outputs.build-type }}
 
-      - name: Check OTA image flash size
+      - name: Build platform-template (917 SiWx)
+        if: needs.set-build-type.outputs.build-type == 'full'
+        uses: SiliconLabsSoftware/matter_build_action@v2.0.0
+        with:
+          json-file-path: ./.github/silabs-builds-siwx-ota.json
+          path-to-example-app: slc/apps/platform-template/wifi/platform-template-siwx.slcw
+          example-app: platform-template
+          build-script: "./slc/build.sh"
+          output-directory: " "
+          build-type: full
+
+      - name: Build lock-app (917 SiWx)
+        if: needs.set-build-type.outputs.build-type == 'full'
+        uses: SiliconLabsSoftware/matter_build_action@v2.0.0
+        with:
+          json-file-path: ./.github/silabs-builds-siwx-ota.json
+          path-to-example-app: slc/apps/lock-app/wifi/lock-app-siwx.slcw
+          example-app: lock-app
+          build-script: "./slc/build.sh"
+          output-directory: " "
+          build-type: full
+
+      - name: Build light-switch-app (917 SiWx)
+        if: needs.set-build-type.outputs.build-type == 'full'
+        uses: SiliconLabsSoftware/matter_build_action@v2.0.0
+        with:
+          json-file-path: ./.github/silabs-builds-siwx-ota.json
+          path-to-example-app: slc/apps/light-switch-app/wifi/light-switch-app-siwx.slcw
+          example-app: light-switch-app
+          build-script: "./slc/build.sh"
+          output-directory: " "
+          build-type: full
+
+      - name: Check OTA image flash size (917 SiWx)
         continue-on-error: true
         run: |
           set -e
-          IMAGE=$(find out -type f -name "*.rps" 2>/dev/null | head -1)
-          if [ -z "$IMAGE" ]; then
-            echo "No .rps image found under out/, skipping OTA flash size check"
-            exit 0
-          fi
+          PAGE_SIZE=256
+          AVAILABLE_FLASH=4194304
           if ! command -v commander >/dev/null 2>&1; then
             echo "commander not found, skipping OTA flash size check"
             exit 0
           fi
-          image_size=$(commander util rpsinfo "$IMAGE" 2>/dev/null | grep "Image size" | sed -n 's/.*(\([0-9]*\)).*/\1/p')
-          if [ -z "$image_size" ]; then
-            echo "Failed to parse image size from rpsinfo"
-            exit 1
+          IMAGES=$(find out -type f -name "*.rps" 2>/dev/null)
+          if [ -z "$IMAGES" ]; then
+            echo "No .rps image found under out/, skipping OTA flash size check"
+            exit 0
           fi
-          rounded_size=$(( 256 * (image_size + 255) / 256 ))
-          available_flash=4194304
-          sum=$(( 2 * rounded_size ))
-          remaining=$(( available_flash - sum ))
+          FAIL=0
+          for IMAGE in $IMAGES; do
+            board=$(echo "$IMAGE" | cut -d'/' -f2)
+            [ -z "$board" ] && continue
+            image_size=$(commander util rpsinfo "$IMAGE" 2>/dev/null | grep "Image size" | sed -n 's/.*(\([0-9]*\)).*/\1/p')
+            [ -z "$image_size" ] && continue
+            rounded=$(( PAGE_SIZE * (image_size + PAGE_SIZE - 1) / PAGE_SIZE ))
+            sum=$(( 2 * rounded ))
+            remaining=$(( AVAILABLE_FLASH - sum ))
+            echo ""
+            echo "  Board: $board  Image: $IMAGE"
+            echo "  Image size (rounded): $rounded B  Running+OTA: $sum B  Remaining: $remaining B"
+            if [ "$sum" -gt "$AVAILABLE_FLASH" ]; then
+              echo "  FAIL: OTA image will NOT fit in ${AVAILABLE_FLASH} B"
+              FAIL=1
+            else
+              echo "  PASS: OTA image fits"
+            fi
+          done
+          if [ "$FAIL" -eq 1 ]; then exit 1; fi
           echo ""
-          echo "  Platform: 917 SiWx (external flash 4MB; running and OTA image size equal; 256B page)"
-          echo "  Image: $IMAGE"
-          echo "  Image size (running = OTA):                           $rounded_size bytes"
-          echo "  Total (running + OTA) flash consumption:             $sum bytes"
-          echo "  Total Remaining:                                      $remaining bytes"
-          echo ""
-          if [ "$sum" -gt "$available_flash" ]; then
-            echo "OTA Update image will NOT fit in the ${available_flash} bytes of external flash space"
-            exit 1
-          else
-            echo "OTA Update image will fit in the ${available_flash} bytes of external flash space"
-          fi
+          echo "All 917 SiWx OTA flash checks passed."

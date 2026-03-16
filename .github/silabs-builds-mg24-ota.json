@@ -1,0 +1,36 @@
+{
+    "standard": {
+        "default": [
+            {
+                "boards": ["brd4187c"],
+                "arguments": [""]
+            }
+        ]
+    },
+    "full": {
+        "default": [
+            {
+                "boards": ["brd4186c", "brd4187c", "brd2601b"],
+                "arguments": [""]
+            }
+        ],
+        "platform-template": [
+            {
+                "boards": ["brd4186c", "brd4187c", "brd2601b"],
+                "arguments": [""]
+            }
+        ],
+        "lock-app": [
+            {
+                "boards": ["brd4186c", "brd4187c", "brd2601b"],
+                "arguments": [""]
+            }
+        ],
+        "light-switch-app": [
+            {
+                "boards": ["brd4186c", "brd4187c", "brd2601b"],
+                "arguments": [""]
+            }
+        ]
+    }
+}
