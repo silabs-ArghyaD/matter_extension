@@ -99,7 +99,7 @@ jobs:
             echo "commander not found, skipping OTA flash size check"
             exit 0
           fi
-          IMAGES=$(find out -type f -name "*.s37" 2>/dev/null)
+          IMAGES=$(find out -type f -name "*.s37" ! -path "*/matter-bootloader/*" 2>/dev/null)
           if [ -z "$IMAGES" ]; then
             echo "No .s37 image found under out/, skipping OTA flash size check"
             exit 0
@@ -198,11 +198,7 @@ jobs:
             echo "commander not found, skipping OTA flash size check"
             exit 0
           fi
-          echo "--- out/ directory (tree -L 3) ---"
-          tree -L 3 out || true
-          IMAGES=$(find out -type f -name "*.s37" 2>/dev/null)
-          echo "--- IMAGES (find output) ---"
-          printf '%s\n' $IMAGES
+          IMAGES=$(find out -type f -name "*.s37" ! -path "*/matter-bootloader/*" 2>/dev/null)
           if [ -z "$IMAGES" ]; then
             echo "No .s37 image found under out/, skipping OTA flash size check"
             exit 0
