@@ -30,7 +30,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "build-type=${{ github.event.inputs.build-type }}" >> $GITHUB_OUTPUT
           else
-            echo "build-type=full" >> $GITHUB_OUTPUT
+            echo "build-type=standard" >> $GITHUB_OUTPUT
           fi
 
   ota-check-mg24:
