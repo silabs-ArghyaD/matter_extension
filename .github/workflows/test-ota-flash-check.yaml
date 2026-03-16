@@ -30,7 +30,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "build-type=${{ github.event.inputs.build-type }}" >> $GITHUB_OUTPUT
           else
-            echo "build-type=standard" >> $GITHUB_OUTPUT
+            echo "build-type=full" >> $GITHUB_OUTPUT
           fi
 
   ota-check-mg24:
@@ -108,12 +108,13 @@ jobs:
           for IMAGE in $IMAGES; do
             board=$(echo "$IMAGE" | cut -d'/' -f2)
             [ -z "$board" ] && continue
+            app_name="${board}-$(basename "$IMAGE" .s37)"
             cd /tmp
-            commander gbl create temporary.gbl --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
-            file_size_running=$(stat -c "%s" temporary.gbl)
+            commander gbl create "temporary-${app_name}.gbl" --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
+            file_size_running=$(stat -c "%s" "temporary-${app_name}.gbl")
             rounded_running=$(( PAGE_SIZE * (file_size_running + PAGE_SIZE - 1) / PAGE_SIZE ))
-            commander gbl create --compress lzma temporary.gbl --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
-            file_size_ota=$(stat -c "%s" temporary.gbl)
+            commander gbl create --compress lzma "temporary-${app_name}.gbl" --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
+            file_size_ota=$(stat -c "%s" "temporary-${app_name}.gbl")
             rounded_ota=$(( PAGE_SIZE * (file_size_ota + PAGE_SIZE - 1) / PAGE_SIZE ))
             sum=$(( rounded_running + rounded_ota ))
             remaining=$(( AVAILABLE_FLASH - sum ))
@@ -126,7 +127,6 @@ jobs:
             else
               echo "  PASS: OTA image fits"
             fi
-            rm -f temporary.gbl
           done
           if [ "$FAIL" -eq 1 ]; then exit 1; fi
           echo ""
@@ -207,12 +207,13 @@ jobs:
           for IMAGE in $IMAGES; do
             board=$(echo "$IMAGE" | cut -d'/' -f2)
             [ -z "$board" ] && continue
+            app_name="${board}-$(basename "$IMAGE" .s37)"
             cd /tmp
-            commander gbl create temporary.gbl --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
-            file_size_running=$(stat -c "%s" temporary.gbl)
+            commander gbl create "temporary-${app_name}.gbl" --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
+            file_size_running=$(stat -c "%s" "temporary-${app_name}.gbl")
             rounded_running=$(( PAGE_SIZE * (file_size_running + PAGE_SIZE - 1) / PAGE_SIZE ))
-            commander gbl create --compress lzma temporary.gbl --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
-            file_size_ota=$(stat -c "%s" temporary.gbl)
+            commander gbl create --compress lzma "temporary-${app_name}.gbl" --app "$GITHUB_WORKSPACE/$IMAGE" 1>/dev/null
+            file_size_ota=$(stat -c "%s" "temporary-${app_name}.gbl")
             rounded_ota=$(( PAGE_SIZE * (file_size_ota + PAGE_SIZE - 1) / PAGE_SIZE ))
             sum=$(( rounded_running + rounded_ota ))
             remaining=$(( AVAILABLE_FLASH - sum ))
@@ -225,7 +226,6 @@ jobs:
             else
               echo "  PASS: OTA image fits"
             fi
-            rm -f temporary.gbl
           done
           if [ "$FAIL" -eq 1 ]; then exit 1; fi
           echo ""

@@ -10,25 +10,25 @@
     "full": {
         "default": [
             {
-                "boards": ["brd4116a", "brd4117a", "brd4118a", "brd2608a", "brd4120a", "brd4121a"],
+                "boards": ["brd4116a"],
                 "arguments": [""]
             }
         ],
         "platform-template": [
             {
-                "boards": ["brd4116a", "brd4117a", "brd4118a", "brd2608a", "brd4120a", "brd4121a"],
+                "boards": ["brd4116a"],
                 "arguments": [""]
             }
         ],
         "lock-app": [
             {
-                "boards": ["brd4116a", "brd4117a", "brd4118a", "brd2608a", "brd4120a", "brd4121a"],
+                "boards": ["brd4116a"],
                 "arguments": [""]
             }
         ],
         "light-switch-app": [
             {
-                "boards": ["brd4116a", "brd4117a", "brd4118a", "brd2608a", "brd4120a", "brd4121a"],
+                "boards": ["brd4116a"],
                 "arguments": [""]
             }
         ]
