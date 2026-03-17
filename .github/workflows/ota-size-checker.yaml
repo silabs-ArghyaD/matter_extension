@@ -1,6 +1,9 @@
 name: Check OTA Flash Space
 
 on:
+  push:
+    branches:
+    - feature/ota-space-check
   schedule:
     - cron: "0 0 * * *"   # Runs every day at 00:00 UTC
   workflow_dispatch:
