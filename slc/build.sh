@@ -82,7 +82,7 @@ build_without_arg() {
 
 # Helper function to run slc generate with retry on timeout
 run_slc_generate_with_retry() {
-	local max_retries=3
+	local max_retries=1
 	local attempt=1
 	local exit_code=0
 	local output=""
