@@ -94,7 +94,6 @@ jobs:
           build-type: full
 
       - name: Check OTA image flash size (MG24)
-        continue-on-error: true
         run: |
           set -e
           PAGE_SIZE=8192
@@ -238,7 +237,6 @@ jobs:
           build-type: full
 
       - name: Check OTA image flash size (MG26)
-        continue-on-error: true
         run: |
           set -e
           PAGE_SIZE=8192
@@ -382,7 +380,6 @@ jobs:
           build-type: full
 
       - name: Check OTA image flash size (917 SiWx)
-        continue-on-error: true
         run: |
           set -e
           PAGE_SIZE=256
