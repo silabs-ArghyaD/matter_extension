@@ -207,10 +207,23 @@ jobs:
               echo "  Running (rounded): $rounded_running B  OTA LZMA (rounded): $rounded_ota B  Remaining: $remaining B"
 
               if [[ "$sum" -gt "$AVAILABLE_FLASH" ]]; then
+                echo "  FAIL: OTA image will NOT fit in ${AVAILABLE_FLASH} B"
                 FAIL=1
                 shortfall=$(( sum - AVAILABLE_FLASH ))
-                echo "  FAIL: OTA image will NOT fit in ${AVAILABLE_FLASH} B"
                 echo "::error title=${PLATFORM} OTA flash exceeded::board=${board} sum=${sum}B limit=${AVAILABLE_FLASH}B shortfall=${shortfall}B image=${IMAGE}"
+                {
+                  echo "### ${PLATFORM} OTA failure"
+                  echo "| Field | Value |"
+                  echo "| --- | --- |"
+                  echo "| Board | \`$board\` |"
+                  echo "| Image | \`$IMAGE\` |"
+                  echo "| Running (rounded) | ${rounded_running} B |"
+                  echo "| OTA LZMA (rounded) | ${rounded_ota} B |"
+                  echo "| Total (sum) | ${sum} B |"
+                  echo "| Limit | ${AVAILABLE_FLASH} B |"
+                  echo "| Shortfall | ${shortfall} B |"
+                  echo ""
+                } >> "$GITHUB_STEP_SUMMARY"
               else
                 echo "  PASS: OTA image fits"
               fi
@@ -226,10 +239,22 @@ jobs:
               echo "  Image size (rounded): $rounded B  Running+OTA: $sum B  Remaining: $remaining B"
 
               if [[ "$sum" -gt "$AVAILABLE_FLASH" ]]; then
+                echo "  FAIL: OTA image will NOT fit in ${AVAILABLE_FLASH} B"
                 FAIL=1
                 shortfall=$(( sum - AVAILABLE_FLASH ))
-                echo "  FAIL: OTA image will NOT fit in ${AVAILABLE_FLASH} B"
                 echo "::error title=${PLATFORM} OTA flash exceeded::board=${board} sum=${sum}B limit=${AVAILABLE_FLASH}B shortfall=${shortfall}B image=${IMAGE}"
+                {
+                  echo "### ${PLATFORM} OTA failure"
+                  echo "| Field | Value |"
+                  echo "| --- | --- |"
+                  echo "| Board | \`$board\` |"
+                  echo "| Image | \`$IMAGE\` |"
+                  echo "| Image size (rounded) | ${rounded} B |"
+                  echo "| Running+OTA (2x) | ${sum} B |"
+                  echo "| Limit | ${AVAILABLE_FLASH} B |"
+                  echo "| Shortfall | ${shortfall} B |"
+                  echo ""
+                } >> "$GITHUB_STEP_SUMMARY"
               else
                 echo "  PASS: OTA image fits"
               fi
@@ -243,6 +268,12 @@ jobs:
             echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             echo "Ref: ${{ github.ref }} @ ${{ github.sha }}"
             echo "Build type: ${BUILD_TYPE}"
+            if [[ "$IMAGE_EXT" == ".s37" ]]; then
+              echo "Flash limit (running + OTA LZMA): ${AVAILABLE_FLASH} B"
+            else
+              echo "Flash limit (running + OTA, 4MB default): ${AVAILABLE_FLASH} B"
+            fi
+            echo "See FAIL lines and annotations above for each image."
             echo "========================================"
             exit 1
           fi
