@@ -47,8 +47,8 @@ jobs:
         include:
           - id: mg24
             display: MG24
-            page_size: 8192
-            available_flash: 1499136
+            page_size: 8192 # bytes (8 KiB flash page)
+            available_flash: 1499136 # bytes (~1.50 MB)
             image_ext: .s37
             exclude_path: "*/matter-bootloader/*"
             json_file: ./.github/silabs-builds-mg24-ota.json
@@ -59,8 +59,8 @@ jobs:
 
           - id: mg26
             display: MG26
-            page_size: 8192
-            available_flash: 3145728
+            page_size: 8192 # bytes (8 KiB flash page)
+            available_flash: 2998272 # bytes (~3 MB)
             image_ext: .s37
             exclude_path: "*/matter-bootloader/*"
             json_file: ./.github/silabs-builds-mg26-ota.json
@@ -71,8 +71,8 @@ jobs:
 
           - id: siwx
             display: 917 SiWx
-            page_size: 256
-            available_flash: 4194304
+            page_size: 256 # bytes (256 B flash page)
+            available_flash: 3997696 # bytes (~4 MB)
             image_ext: .rps
             exclude_path: ""
             json_file: ./.github/silabs-builds-siwx-ota.json
