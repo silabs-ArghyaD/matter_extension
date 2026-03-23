@@ -313,7 +313,7 @@ if [ "$skip_gen" = false ]; then
 
 			# Generate bootloader
 			echo "Generating bootloader..."
-			run_slc_generate_with_retry generate -d "$OUTPUT_DIR" --sdk-package-path "$SISDK_ROOT" --sdk-package-path "$EXTENSION_DIR" --sdk-package-path "$WISECONNECT3_DIR" $PROJECT_FLAG "$SILABS_APP_PATH" $BOOTLOADER_WITH_ARG $BOOTLOADER_WITHOUT_ARG -pids bootloader $CONFIG_ARGS -o makefile
+			run_slc_generate_with_retry generate -d "$OUTPUT_DIR" --sdk-package-path "$SISDK_ROOT" --sdk-package-path "$EXTENSION_DIR" --sdk-package-path "$WISECONNECT3_DIR" $PROJECT_FLAG "$SILABS_APP_PATH" $BOOTLOADER_WITH_ARG $BOOTLOADER_WITHOUT_ARG -pids bootloader $CONFIG_ARGS --generator-timeout=180 -o makefile
 			if [ $? -ne 0 ]; then
 				echo "ERROR: Failed to generate bootloader for: $SILABS_APP_PATH"
 				exit 1
@@ -325,7 +325,7 @@ if [ "$skip_gen" = false ]; then
 			WITH_ARG=$(build_with_arg "$SILABS_BOARD" "$WITH_APP_COMPONENTS")
 
 			echo "Generating trustzone-secure..."
-			run_slc_generate_with_retry generate -d "$OUTPUT_DIR" --sdk-package-path "$SISDK_ROOT" --sdk-package-path "$EXTENSION_DIR" --sdk-package-path "$WISECONNECT3_DIR" $PROJECT_FLAG "$SILABS_APP_PATH" $WITH_ARG -pids trustzone-secure $CONFIG_ARGS -o makefile
+			run_slc_generate_with_retry generate -d "$OUTPUT_DIR" --sdk-package-path "$SISDK_ROOT" --sdk-package-path "$EXTENSION_DIR" --sdk-package-path "$WISECONNECT3_DIR" $PROJECT_FLAG "$SILABS_APP_PATH" $WITH_ARG -pids trustzone-secure $CONFIG_ARGS --generator-timeout=180 -o makefile
 			if [ $? -ne 0 ]; then
 				echo "ERROR: Failed to generate application for: $SILABS_APP_PATH"
 				exit 1
@@ -338,7 +338,7 @@ if [ "$skip_gen" = false ]; then
 			APP_WITHOUT_ARG=$(build_without_arg "$WITHOUT_APP_COMPONENTS")
 
 			echo "Generating application..."
-			run_slc_generate_with_retry generate -d "$OUTPUT_DIR" --sdk-package-path "$SISDK_ROOT" --sdk-package-path "$EXTENSION_DIR" --sdk-package-path "$WISECONNECT3_DIR" $PROJECT_FLAG "$SILABS_APP_PATH" $APP_WITH_ARG $APP_WITHOUT_ARG -pids application $CONFIG_ARGS -o makefile
+			run_slc_generate_with_retry generate -d "$OUTPUT_DIR" --sdk-package-path "$SISDK_ROOT" --sdk-package-path "$EXTENSION_DIR" --sdk-package-path "$WISECONNECT3_DIR" $PROJECT_FLAG "$SILABS_APP_PATH" $APP_WITH_ARG $APP_WITHOUT_ARG -pids application $CONFIG_ARGS --generator-timeout=180 -o makefile
 			if [ $? -ne 0 ]; then
 				echo "ERROR: Failed to generate application for: $SILABS_APP_PATH"
 				exit 1
@@ -346,7 +346,7 @@ if [ "$skip_gen" = false ]; then
 		fi
 	else
 		# Generate .slcp projects
-		run_slc_generate_with_retry generate -d "$OUTPUT_DIR" --sdk-package-path "$SISDK_ROOT" --sdk-package-path "$EXTENSION_DIR" --sdk-package-path "$WISECONNECT3_DIR" $PROJECT_FLAG "$SILABS_APP_PATH" --with "$SILABS_BOARD" $CONFIG_ARGS -o makefile
+		run_slc_generate_with_retry generate -d "$OUTPUT_DIR" --sdk-package-path "$SISDK_ROOT" --sdk-package-path "$EXTENSION_DIR" --sdk-package-path "$WISECONNECT3_DIR" $PROJECT_FLAG "$SILABS_APP_PATH" --with "$SILABS_BOARD" $CONFIG_ARGS --generator-timeout=180 -o makefile
 		if [ $? -ne 0 ]; then
 			echo "ERROR: Failed to generate project for: $SILABS_APP_PATH"
 			exit 1
