@@ -1,11 +1,8 @@
-name: Check OTA Flash Space (Unified)
+name: Check OTA Flash Space
 
 on:
-  push:
-    branches:
-      - feature/ota-space-check
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 0 * * *" # Runs every day at 00:00 UTC
   workflow_dispatch:
     inputs:
       build-type:
@@ -70,7 +67,7 @@ jobs:
             light_switch_path: slc/apps/light-switch-app/thread/light-switch-app-series-2.slcw
 
           - id: siwx
-            display: 917 SiWx
+            display: SiWx 917
             page_size: 256 # bytes (256 B flash page)
             available_flash: 3997696 # bytes (~4 MB)
             image_ext: .rps
@@ -265,9 +262,6 @@ jobs:
             echo ""
             echo "========================================"
             echo "OTA FLASH CHECK FAILED (${PLATFORM})"
-            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            echo "Ref: ${{ github.ref }} @ ${{ github.sha }}"
-            echo "Build type: ${BUILD_TYPE}"
             if [[ "$IMAGE_EXT" == ".s37" ]]; then
               echo "Flash limit (running + OTA LZMA): ${AVAILABLE_FLASH} B"
             else
