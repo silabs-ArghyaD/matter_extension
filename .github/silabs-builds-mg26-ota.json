@@ -1,17 +1,18 @@
 {
     "standard": {
-        "default": [
+        "lighting-app": [
             {
                 "boards": ["brd4116a"],
                 "arguments": [""]
             }
-        ]
-    },
-    "full": {
-        "default": [
+        ],
+        "zigbee-matter-light": [
             {
                 "boards": ["brd4116a"],
-                "arguments": [""]
+                "arguments": [
+                    "--output_suffix sequential",
+                    "--with_app matter_zigbee_sequential"
+                ]
             }
         ],
         "platform-template": [
