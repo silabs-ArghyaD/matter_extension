@@ -14,24 +14,6 @@
                     "--with_app matter_zigbee_sequential"
                 ]
             }
-        ],
-        "platform-template": [
-            {
-                "boards": ["brd4116a"],
-                "arguments": [""]
-            }
-        ],
-        "lock-app": [
-            {
-                "boards": ["brd4116a"],
-                "arguments": [""]
-            }
-        ],
-        "light-switch-app": [
-            {
-                "boards": ["brd4116a"],
-                "arguments": [""]
-            }
         ]
     }
 }
